@@ -106,8 +106,6 @@ print(recommend_order(current_inventory=200, par_level_value=700, pending_quanti
 │   └── par_levels.csv                       # latest recommended par levels per series
 ├── src/                                     # tested helper modules
 ├── tests/                                   # pytest suite
-├── video_script/
-│   └── video_walkthrough_outline.md         # outline for the 3-5 minute video
 └── requirements.txt
 ```
 
