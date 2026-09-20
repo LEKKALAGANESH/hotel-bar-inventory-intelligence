@@ -46,6 +46,11 @@ def derive_consumption(df: pd.DataFrame) -> pd.Series:
     return df["opening_inventory"] + df["purchases"] - df["closing_inventory"]
 
 
+def check_conservation(df: pd.DataFrame, opening: str, purchase: str, consumed: str, closing: str, tol: float = 0.05) -> pd.Series:
+    """Boolean mask of rows violating Closing = Opening + Purchase - Consumed (beyond tol)."""
+    return (df[opening] + df[purchase] - df[consumed] - df[closing]).abs() > tol
+
+
 def build_daily_panel(df: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame:
     """Create a dense daily panel so zero-consumption days remain represented."""
     if "date" not in df.columns:

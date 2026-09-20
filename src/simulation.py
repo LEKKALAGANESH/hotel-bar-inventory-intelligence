@@ -11,32 +11,36 @@ class SimulationResult:
     average_inventory: float
     service_level: float
     ending_inventory: float
+    turnover: float
 
 
-def simulate_inventory(demand, opening_inventory: float, reorder_quantity: float, reorder_point: float, lead_time_days: int = 0) -> SimulationResult:
-    """Simulate a simple replenishment policy against an ordered demand sequence."""
+def simulate_inventory(demand, opening_inventory: float, par_level, lead_time_days: int = 2, reorder_point: float | None = None) -> SimulationResult:
+    """Order-up-to-par policy: order (par - on-hand - in-transit) whenever position < reorder_point (default par).
+
+    Lost demand is not backordered. Turnover = units served / average inventory.
+    """
+    demand = list(demand)
+    pars = list(par_level) if hasattr(par_level, "__len__") else [float(par_level)] * len(demand)  # per-day par allows dynamic policies
+    lead = max(0, int(lead_time_days))
     inventory = float(opening_inventory)
     in_transit: list[tuple[int, float]] = []
     stockout_days = 0
-    lost_units = 0.0
-    inventory_levels: list[float] = []
-    served_units = 0.0
-    total_demand = 0.0
-    for day, raw_demand in enumerate(demand):
-        arrivals = sum(qty for arrival_day, qty in in_transit if arrival_day <= day)
-        in_transit = [(arrival_day, qty) for arrival_day, qty in in_transit if arrival_day > day]
-        inventory += arrivals
-        daily = max(0.0, float(raw_demand))
+    lost_units = served_units = total_demand = 0.0
+    levels: list[float] = []
+    for day, raw in enumerate(demand):
+        inventory += sum(qty for due, qty in in_transit if due <= day)
+        in_transit = [(due, qty) for due, qty in in_transit if due > day]
+        daily = max(0.0, float(raw))
         total_demand += daily
         served = min(inventory, daily)
         inventory -= served
         served_units += served
-        lost = daily - served
-        lost_units += lost
-        stockout_days += int(lost > 0)
-        if inventory <= reorder_point and reorder_quantity > 0:
-            in_transit.append((day + max(0, int(lead_time_days)), reorder_quantity))
-        inventory_levels.append(inventory)
-    avg = sum(inventory_levels) / len(inventory_levels) if inventory_levels else 0.0
+        lost_units += daily - served
+        stockout_days += int(daily > served)
+        position = inventory + sum(qty for _, qty in in_transit)
+        if position < (pars[day] if reorder_point is None else reorder_point):
+            in_transit.append((day + lead, pars[day] - position))
+        levels.append(inventory)
+    avg = sum(levels) / len(levels) if levels else 0.0
     service = served_units / total_demand if total_demand else 1.0
-    return SimulationResult(stockout_days, lost_units, avg, service, inventory)
+    return SimulationResult(stockout_days, lost_units, avg, service, inventory, served_units / avg if avg else 0.0)
