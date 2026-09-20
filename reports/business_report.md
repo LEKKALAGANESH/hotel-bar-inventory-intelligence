@@ -1,6 +1,6 @@
 # Hotel Bar Inventory: Forecasting and Par Levels
 
-Data: 6,575 transactions, 6 bars x 16 brands (96 series), 2023-01-01 to 2024-01-01. Every row satisfies Closing = Opening + Purchase - Consumed. Test window: last 74 days (20%), split by time.
+Data: 6,575 transactions, 6 bars x 16 brands (96 series), 2023-01-01 to 2024-01-01. Closing = Opening + Purchase - Consumed holds on 97.8% of rows; the other 145 (2.2%) are off by at most 9.2 ml, which looks like rounding of the balances and does not affect consumption. Test window: last 74 days (20%), split by time.
 
 ## 1. Core business problem and operational impact
 Bars either run out of popular brands or tie up cash and backroom space in slow ones. The data shows 416 closing-balance-zero events (6.3% of records) on items with demand, concentrated in Thomas's (103) and Taylor's (94) bars. Each is a guest who could not order a drink, plus revenue lost. Volume is spread evenly: 69 of 96 series are needed to reach 80% of consumption (Class A), so par levels must be right for most brands, not just a few.
